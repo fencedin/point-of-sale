@@ -21,7 +21,7 @@ def welcome
     main
   when 'e'
     clear
-    sales
+    employee_log_in
   when 'x'
     clear
     puts "\nGood-bye!\n\n"
@@ -116,8 +116,9 @@ def list_products
   puts "Here are all products in our inventory"
   puts " ===================================="
   Product.all.each do |product|
-    if product.inventories.count != 0
-      puts "  #{product.name}: $#{product.price} qty: #{product.inventories.count}"
+
+    if product.inventories.where({in_stock: true}).count != 0
+      puts "  #{product.name}: $#{product.price} qty: #{product.inventories.where({in_stock: true}).count}"
     else
       puts "  #{product.name}: $#{product.price} qty: sold out!"
     end
@@ -158,7 +159,29 @@ def edit_product
 end
 
 def edit_product_qty
+  list_products
+  puts "Select product you would like to update quantity of"
+  p_name = gets.chomp
+  puts "Enter quantity"
+  p_qty = gets.chomp.to_i
+  p_id = Product.where(name: p_name).first.id
 
+  current_qty = Inventory.where({product_id: p_id, in_stock: true}).count
+
+  if current_qty < p_qty
+    (p_qty - current_qty).times do
+      Inventory.create({product_id: p_id, in_stock: true})
+    end
+
+  elsif current_qty > p_qty
+    (current_qty - p_qty).times do
+      found_product = Inventory.where({product_id: p_id, in_stock: true}).first
+      found_product.update({in_stock: false})
+    end
+
+  else
+    puts "Nothing got changed!"
+  end
 end
 
 def delete_product
@@ -273,7 +296,60 @@ end
 
 #~~~~SALES~~~~~~~
 
+def employee_log_in
+  puts "Who are you?"
+  name = gets.chomp
+  puts "Password?"
+  password = gets.chomp
+  if Cashier.where({name: name, password: password}).first
+    @cashier_id = Cashier.where({name: name, password: password}).first.id
+    sales
+  else
+    clear
+    error
+    welcome
+  end
+end
+
 def sales
+  choice = nil
+  until choice == 'w'
+    puts " Press 'a' to add new transaction"
+    puts "       'w' to go back to main menu"
+
+    case gets.chomp
+    when 'a'
+      list_products
+      puts "Enter item being sold"
+      p_name = gets.chomp
+      puts "Enter quantity"
+      qty = gets.chomp.to_i
+      p_id = Product.where({name: p_name}).first.id
+
+      if Inventory.where({product_id: p_id, in_stock: true}).count >= qty
+        qty.times do
+          Transaction.create({product_id: p_id, cashier_id: @cashier_id})
+
+          found_product = Inventory.where({product_id: p_id, in_stock: true}).first
+          found_product.update({in_stock: false})
+        end
+        clear
+        sales
+      else
+        clear
+        puts "Sorry we dont have enough"
+        error
+      end
+
+    when 'w'
+      clear
+      welcome
+    else
+      clear
+      error
+      sales
+    end
+  end
 
 end
 
