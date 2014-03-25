@@ -40,8 +40,10 @@ def main
 
   choice = nil
   until choice == 'x'
+
     puts "Press 'p' for product menu"
     puts "      'c' for cashier menu"
+    puts "      'd' for daily sales"
     # puts "      'd' to mark a task as done."
     puts "      'w' to got back to welcome menu."
     choice = gets.chomp
@@ -52,6 +54,8 @@ def main
     when 'c'
       clear
       cashier_menu
+    when 'd'
+      daily_sales
     when 'w'
       clear
       welcome
@@ -324,23 +328,28 @@ def sales
       p_name = gets.chomp
       puts "Enter quantity"
       qty = gets.chomp.to_i
-      p_id = Product.where({name: p_name}).first.id
+      if p_name != '' && qty != ''
+        p_id = Product.where({name: p_name}).first.id
 
-      if Inventory.where({product_id: p_id, in_stock: true}).count >= qty
-        qty.times do
-          Transaction.create({product_id: p_id, cashier_id: @cashier_id})
+        if Inventory.where({product_id: p_id, in_stock: true}).count >= qty
+          qty.times do
+            Transaction.create({product_id: p_id, cashier_id: @cashier_id})
 
-          found_product = Inventory.where({product_id: p_id, in_stock: true}).first
-          found_product.update({in_stock: false})
+            found_product = Inventory.where({product_id: p_id, in_stock: true}).first
+            found_product.update({in_stock: false})
+          end
+          clear
+          sales
+        else
+          clear
+          puts "Sorry we dont have enough"
+          error
         end
-        clear
-        sales
       else
         clear
-        puts "Sorry we dont have enough"
         error
+        sales
       end
-
     when 'w'
       clear
       welcome
@@ -350,9 +359,25 @@ def sales
       sales
     end
   end
-
 end
 
+def daily_sales
+  total_sales = 0
+  puts "Enter date of purchase you would like to see the total sales in YYYY-MM-DD"
+  date = gets.chomp
+  puts "\n"
+  count = Transaction.where("created_at BETWEEN '#{date} 00:00:00' AND '#{date} 23:59:59'").count
+  count.times do
+    sales_day = Transaction.where("created_at BETWEEN '#{date} 00:00:00' AND '#{date} 23:59:59'")
+    sales_day.each do |sale|
+      total_sales += sale.product.price
+      puts "#{sale.product.name} #{sale.product.price}"
+    end
+  end
+  puts "====================================="
+  puts "Total sales for #{date}: \e[32m$#{'%.02f' % total_sales}\e[0m\n\n"
+
+end
 
 # ~~~~OTHER~~~~
 
@@ -362,8 +387,8 @@ end
 
 def error
   clear
-  puts "\e[5;31m(╯°□°）╯︵ ┻━┻"
-  puts "Error!!!!\e[0;0m\n\n"
+  puts "\n  \e[5;31m(╯°□°）╯︵ ┻━┻"
+  puts "  Error!!!!\e[0;0m\n\n"
 end
 
 clear
