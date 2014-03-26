@@ -11,7 +11,7 @@ development_configuration = database_configurations['development']
 ActiveRecord::Base.establish_connection(development_configuration)
 
 def welcome
-  puts "***Welcome to the Place Of Sweets of 1990 for our sweet products.***\n\n"
+  puts "\e[34m***Welcome to the Place Of Sweets of 1990 for our sweet products.***\e[0m\n\n"
   puts "Press 'm' to go to store menu"
   puts "      'e' for employee login"
   puts "      'x' to exit"
@@ -24,7 +24,7 @@ def welcome
     employee_log_in
   when 'x'
     clear
-    puts "\nGood-bye!\n\n"
+    puts "\e[32m\nGood-bye!\n\n\e[0m"
     exit
   else
     clear
@@ -34,17 +34,12 @@ def welcome
 end
 
 def main
-  puts "======= MAIN MENU ========"
-  #list inventory
-#list tranactions - sold items
-
+  puts "\e[33m======= MAIN MENU ========\e[0m"
   choice = nil
   until choice == 'x'
-
     puts "Press 'p' for product menu"
     puts "      'c' for cashier menu"
     puts "      'd' for daily sales"
-    # puts "      'd' to mark a task as done."
     puts "      'w' to got back to welcome menu."
     choice = gets.chomp
     case choice
@@ -68,7 +63,7 @@ end
 # ~~~~PRODUCT~~~~
 
 def product_menu
-  puts "======= PRODUCT MENU ========"
+  puts "\e[33m======= PRODUCT MENU ========\e[0m"
     choice = nil
   until choice == 'm'
     puts "Press 'a' to add a product"
@@ -112,19 +107,24 @@ def add_product
   end
 
   clear
-  puts "'#{new_p.name}' was added with the super low price of #{new_p.price}!"
+  puts "\e[32m'#{new_p.name}' was added with the super low price of #{new_p.price}!\e[0m"
 end
 
 def list_products
   clear
   puts "Here are all products in our inventory"
-  puts " ===================================="
+  puts " =============================================="
+  puts " name                      price    qty"
   Product.all.each do |product|
 
     if product.inventories.where({in_stock: true}).count != 0
-      puts "  #{product.name}: $#{product.price} qty: #{product.inventories.where({in_stock: true}).count}"
+      puts "  #{product.name}:" + " "*(25-product.name.length) +
+              "$#{product.price}" + " "*(8-product.price.to_s.length) +
+              "#{product.inventories.where({in_stock: true}).count}"
     else
-      puts "  #{product.name}: $#{product.price} qty: sold out!"
+      puts "  #{product.name}:" + " "*(25-product.name.length) +
+              "$#{product.price}" + " "*(8-product.price.to_s.length) +
+              "\e[31msold out!\e[0m"
     end
   end
     puts " ===================================="
@@ -146,16 +146,16 @@ def edit_product
     else
       product.update({price: new_price.to_f})
       clear
-      puts "#{product.name} has been updated with the new price of $#{product.price}\n\n"
+      puts "\e[32m#{product.name} has been updated with the new price of $#{product.price}\n\n\e[0m"
     end
   elsif new_name != "" && new_price != ""
     product.update({name: new_name, price: new_price.to_f})
     clear
-    puts "#{p_name} has been changed to #{product.name} and has been updated with the new price of $#{product.price}\n\n"
+    puts "\e[32m#{p_name} has been changed to #{product.name} and has been updated with the new price of $#{product.price}\n\n\e[0m"
   elsif new_name != "" && new_price == ""
     product.update({name: new_name})
     clear
-    puts "#{p_name} has been updated with the new name of #{product.name}\n\n"
+    puts "\e[32m#{p_name} has been updated with the new name of #{product.name}\n\n\e[0m"
   else
     clear
     error
@@ -176,15 +176,18 @@ def edit_product_qty
     (p_qty - current_qty).times do
       Inventory.create({product_id: p_id, in_stock: true})
     end
-
+    clear
+    puts "\e[32mQuantity updated to #{p_qty}\n\n\e[0m"
   elsif current_qty > p_qty
     (current_qty - p_qty).times do
       found_product = Inventory.where({product_id: p_id, in_stock: true}).first
       found_product.update({in_stock: false})
     end
-
+    clear
+    puts "\e[32mQuantity updated to #{p_qty}\n\n\e[0m"
   else
-    puts "Nothing got changed!"
+    clear
+    puts "Nothing got changed!\n\n"
   end
 end
 
@@ -206,7 +209,7 @@ end
 # ~~~~CASHIER~~~~
 
 def cashier_menu
-  puts "======= CASHIER MENU ========"
+  puts "\e[33m======= CASHIER MENU ========\e[0m"
     choice = nil
   until choice == 'm'
     puts "Press 'a' to add a cashier"
@@ -240,14 +243,15 @@ def add_cashier
   c_password = gets.chomp
   new_c = Cashier.create({name: c_name, password: c_password})
   clear
-  puts "'#{new_c.name}' was added with the super cool password of #{new_c.password}!"
+  puts "\e[32m'#{new_c.name}' was added with the super cool password of #{new_c.password}!\e[0m"
 end
 
 def list_cashiers
   clear
   puts "Here are all cashiers in the store"
   puts " ===================================="
-  Cashier.all.each {|cashier| puts "  #{cashier.name} pw: #{cashier.password}"}
+  puts " name                pw"
+  Cashier.all.each {|cashier| puts "  #{cashier.name}" + " "*(20-cashier.name.length) + "\e[2;37m#{cashier.password}\e[0m"}
   puts " ===================================="
 end
 
@@ -267,16 +271,16 @@ def edit_cashier
     else
       cashier.update({password: new_password})
       clear
-      puts "#{cashier.name} has been updated with the new password of #{cashier.password}\n\n"
+      puts "\e[32m#{cashier.name} has been updated with the new password of #{cashier.password}\n\n\e[0m"
     end
   elsif new_name != "" && new_password != ""
     cashier.update({name: new_name, password: new_password})
     clear
-    puts "#{c_name} has been changed to #{cashier.name} and has been updated with the new password of #{cashier.password}\n\n"
+    puts "\e[32m#{c_name} has been changed to #{cashier.name} and has been updated with the new password of #{cashier.password}\n\n\e[0m"
   elsif new_name != "" && new_password == ""
     cashier.update({name: new_name})
     clear
-    puts "#{c_name} has been updated with the new name of #{cashier.name}\n\n"
+    puts "\e[32m#{c_name} has been updated with the new name of #{cashier.name}\n\n\e[0m"
   else
     clear
     error
@@ -291,7 +295,7 @@ def delete_cashier
   if cashier = Cashier.where({name: c_name}).first
     cashier.destroy
     clear
-    puts "#{c_name} was fired ٩(͡๏̯͡๏)۶\n\n"
+    puts "\e[31m#{c_name} was fired ٩(͡๏̯͡๏)۶\n\e[0m"
   else
     clear
     error
@@ -307,7 +311,9 @@ def employee_log_in
   password = gets.chomp
   if Cashier.where({name: name, password: password}).first
     @cashier_id = Cashier.where({name: name, password: password}).first.id
-    sales
+    @cashier_name = Cashier.where({name: name, password: password}).first.name
+    clear
+    sales_menu
   else
     clear
     error
@@ -315,12 +321,35 @@ def employee_log_in
   end
 end
 
-def sales
-  choice = nil
-  until choice == 'w'
-    puts " Press 'a' to add new transaction"
-    puts "       'w' to go back to main menu"
+def sales_menu
+  puts "\e[2;36m*You are logged in as #{@cashier_name}.\n\e[0;0m"
+  puts "\e[33m============ New Sale ============\e[0m"
+  puts "Press 's' to start a new transaction"
+  puts "      'w' to go back to main menu"
+  case gets.chomp
+  when 's'
+    clear
+    one_sale
+  when 'w'
+    clear
+    welcome
+  else
+    clear
+    error
+    sales_menu
+  end
+end
 
+
+def one_sale
+  choice = nil
+  @total_sale = 0
+  @cart = []
+  until choice == 'e'
+    puts "\e[2;36m*You are logged in as #{@cashier_name}.\n\e[0;0m"
+    puts "==========================================="
+    puts "Press 'a' to enter a new item"
+    puts "      'e' to end transaction and get total"
     case gets.chomp
     when 'a'
       list_products
@@ -329,17 +358,16 @@ def sales
       puts "Enter quantity"
       qty = gets.chomp.to_i
       if p_name != '' && qty != ''
-        p_id = Product.where({name: p_name}).first.id
-
-        if Inventory.where({product_id: p_id, in_stock: true}).count >= qty
+        p = Product.where({name: p_name}).first
+        if Inventory.where({product_id: p.id, in_stock: true}).count >= qty
           qty.times do
-            Transaction.create({product_id: p_id, cashier_id: @cashier_id})
-
-            found_product = Inventory.where({product_id: p_id, in_stock: true}).first
+            Transaction.create({product_id: p.id, cashier_id: @cashier_id})
+            @total_sale += p.price
+            @cart << p
+            found_product = Inventory.where({product_id: p.id, in_stock: true}).first
             found_product.update({in_stock: false})
           end
           clear
-          sales
         else
           clear
           puts "Sorry we dont have enough"
@@ -348,17 +376,28 @@ def sales
       else
         clear
         error
-        sales
       end
-    when 'w'
+    when 'e'
+      puts "\n\n\n========= Place Of Sweets ========="
+      puts "Your cashier today was #{@cashier_name}"
+      puts "==================================="
+      @cart.each do |item|
+        puts "  #{item.name}" + " "*(25-item.name.length) + "$#{'%.02f' % item.price}"
+      end
+      puts "==================================="
+      puts "  Total is:                $#{'%.02f' % @total_sale}"
+      puts "==================================="
+      puts "\n\n\n(press enter to go back to sales menu)"
+      gets.chomp
       clear
-      welcome
+      sales_menu
     else
       clear
       error
-      sales
+      sales_menu
     end
   end
+
 end
 
 def daily_sales
@@ -366,16 +405,12 @@ def daily_sales
   puts "Enter date of purchase you would like to see the total sales in YYYY-MM-DD"
   date = gets.chomp
   puts "\n"
-  count = Transaction.where("created_at BETWEEN '#{date} 00:00:00' AND '#{date} 23:59:59'").count
-  count.times do
-    sales_day = Transaction.where("created_at BETWEEN '#{date} 00:00:00' AND '#{date} 23:59:59'")
-    sales_day.each do |sale|
-      total_sales += sale.product.price
-      puts "#{sale.product.name} #{sale.product.price}"
-    end
+  Transaction.where(created_at: date.."#{date} 23:59:59").each do |sale|
+    total_sales += sale.product.price
+    puts "#{sale.product.name}" + " "*(25-sale.product.name.length) + "#{'%.02f' % sale.product.price}"
   end
-  puts "====================================="
-  puts "Total sales for #{date}: \e[32m$#{'%.02f' % total_sales}\e[0m\n\n"
+  puts "==============================="
+  puts "Total sales:           \e[32m$#{'%.02f' % total_sales}\e[0m\n\n"
 
 end
 
